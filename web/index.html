@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#07070a">
+  <title>Slide Generator</title>
+  <link rel="stylesheet" href="/static/styles.css?v=1.2.0">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Slide Generator home">
+        <svg class="brand-icon" viewBox="0 0 42 42" aria-hidden="true">
+          <path d="M7 11.5 21 3l14 8.5v19L21 39 7 30.5z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <path d="m7 11.5 14 8.4 14-8.4M21 3v36M7 30.5l14-8.4 14 8.4M13.8 7.4 28.2 34.6M28.2 7.4 13.8 34.6" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".72"/>
+        </svg>
+        <span class="brand-copy">
+          <strong>Slide Generator</strong>
+          <small>Excel data to PowerPoint</small>
+        </span>
+      </a>
+      <nav class="header-actions" aria-label="Application actions">
+        <span class="local-chip"><span class="status-dot"></span>Local application</span>
+        <button id="newPresentationButton" class="header-button" type="button">New presentation</button>
+        <button id="helpButton" class="icon-button header-icon" type="button" aria-label="Open help" title="Help">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.7 9.1a2.55 2.55 0 1 1 4.8 1.2c-.7 1.2-2.5 1.5-2.5 3.2M12 17.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <h1>Create slides from Excel.</h1>
+        <p class="hero-description">Choose an Excel workbook, select the data you want to show, and create a PowerPoint presentation.</p>
+        <div class="hero-actions">
+          <button id="heroSelectButton" class="primary-button" type="button">Select workbook</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="workflow shell-wide" aria-label="Slide creation workflow">
+
+
+      <div class="stages">
+        <section id="stageSelect" class="stage active" data-stage="1" aria-labelledby="stageSelectTitle">
+          <header class="stage-header">
+            <div class="stage-number">01</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="selectStageState">Active</span>
+              <h3 id="stageSelectTitle">Select a workbook</h3>
+              <p>Choose the Excel file you want to use. You can review the file before analyzing it.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <input id="fileInput" type="file" accept=".xlsx" hidden>
+            <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Select or drop an Excel workbook">
+              <div class="drop-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3"/></svg>
+              </div>
+              <div>
+                <strong id="dropTitle">Drop an Excel workbook here</strong>
+                <span id="dropSubtitle">or select a local .xlsx file</span>
+              </div>
+              <button id="browseButton" class="secondary-button" type="button">Browse files</button>
+            </div>
+
+            <div id="selectedFilePanel" class="selected-file hidden" aria-live="polite">
+              <div class="file-identity">
+                <div class="file-icon" aria-hidden="true">XLSX</div>
+                <div><strong id="selectedFileName"></strong><span id="selectedFileMeta"></span></div>
+              </div>
+              <div class="file-actions">
+                <button id="changeWorkbookButton" class="secondary-button compact-button" type="button">Change workbook</button>
+                <button id="removeWorkbookButton" class="text-button danger-text" type="button">Remove</button>
+              </div>
+            </div>
+            <div id="fileError" class="message error hidden" role="alert"></div>
+          </div>
+        </section>
+
+        <section id="stageAnalyze" class="stage locked" data-stage="2" aria-labelledby="stageAnalyzeTitle">
+          <header class="stage-header">
+            <div class="stage-number">02</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="analyzeStageState">Locked</span>
+              <h3 id="stageAnalyzeTitle">Analyze the workbook</h3>
+              <p>The app looks through each worksheet and finds data that can be turned into slides.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <div id="analysisLocked" class="locked-message"><span class="lock-icon">⌁</span>Select a workbook to unlock analysis.</div>
+            <div id="analysisControls" class="hidden">
+              <div class="action-row">
+                <div>
+                  <strong>Ready to review the selected workbook</strong>
+                  <span>Click Analyze workbook when you are ready.</span>
+                </div>
+                <button id="analyzeButton" class="primary-button" type="button">Analyze workbook</button>
+              </div>
+            </div>
+            <div id="analysisProgress" class="progress-panel hidden" aria-live="polite">
+              <div class="spinner" aria-hidden="true"></div>
+              <div><strong>Analyzing workbook</strong><span id="analysisProgressText">Reading worksheets and finding usable data…</span></div>
+            </div>
+            <div id="analysisError" class="message error hidden" role="alert"></div>
+
+            <div id="analysisSummary" class="analysis-summary hidden" aria-live="polite">
+              <div class="summary-heading">
+                <div><span class="success-mark">✓</span><div><strong>Workbook analysis complete</strong><span id="analysisSummaryLine"></span></div></div>
+                <button id="reanalyzeButton" class="text-button" type="button">Analyze again</button>
+              </div>
+              <div class="metric-grid">
+                <article><span>Worksheets</span><strong id="summaryWorksheets">0</strong></article>
+                <article><span>Data sections</span><strong id="summaryTables">0</strong></article>
+                <article><span>Recommended</span><strong id="summaryRecommended">0</strong></article>
+                <article><span>Types found</span><strong id="summaryKinds">0</strong></article>
+              </div>
+              <div id="kindBadges" class="badge-row"></div>
+              <details class="details-panel">
+                <summary>View worksheet details</summary>
+                <div id="worksheetDetails" class="worksheet-details"></div>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section id="stageReview" class="stage locked" data-stage="3" aria-labelledby="stageReviewTitle">
+          <header class="stage-header">
+            <div class="stage-number">03</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="reviewStageState">Locked</span>
+              <h3 id="stageReviewTitle">Choose the data to use</h3>
+              <p>Review the data the app found, then choose the section you want to turn into a slide.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <div id="reviewLocked" class="locked-message"><span class="lock-icon">⌁</span>Analyze the workbook to review detected content.</div>
+            <div id="reviewContent" class="review-layout hidden">
+              <aside class="dataset-browser">
+                <div class="browser-tools">
+                  <label class="field-label">Search data sections
+                    <div class="search-control"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg><input id="tableSearch" type="search" placeholder="Search worksheet, title, or data type"></div>
+                  </label>
+                  <label class="field-label">Worksheet
+                    <select id="sheetFilter"><option value="__all__">All worksheets</option></select>
+                  </label>
+                  <label class="check-row"><input id="recommendedOnly" type="checkbox"><span>Show only recommended</span></label>
+                </div>
+                <div class="browser-count"><span id="tableCount">0</span> data sections</div>
+                <div id="tableList" class="table-list"></div>
+              </aside>
+
+              <div id="datasetEmpty" class="dataset-empty">
+                <div class="empty-orbit" aria-hidden="true"><span></span></div>
+                <strong>Select a data section</strong>
+                <p>Choose a section to preview its columns and sample rows before creating a slide.</p>
+              </div>
+
+              <article id="datasetDetail" class="dataset-detail hidden">
+                <div class="dataset-detail-header">
+                  <div>
+                    <div class="badge-row"><span id="detailKind" class="tag"></span><span id="detailConfidence" class="tag"></span><span id="detailRecommended" class="tag hidden">Recommended</span></div>
+                    <h4 id="detailTitle"></h4>
+                    <p id="detailSource"></p>
+                  </div>
+                  <button id="configureDatasetButton" class="primary-button" type="button">Create slide from this data</button>
+                </div>
+                <div id="detailWarnings" class="warning-stack"></div>
+                <div id="columnProfiles" class="column-profiles"></div>
+                <details class="details-panel" open>
+                  <summary>Preview data</summary>
+                  <div class="table-scroll"><table id="previewTable"></table></div>
+                </details>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="stageConfigure" class="stage locked" data-stage="4" aria-labelledby="stageConfigureTitle">
+          <header class="stage-header">
+            <div class="stage-number">04</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="configureStageState">Locked</span>
+              <h3 id="stageConfigureTitle">Build your slide</h3>
+              <p>Start with the recommended setup or choose the chart details yourself.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <div id="configureLocked" class="locked-message"><span class="lock-icon">⌁</span>Choose a data section to start creating a slide.</div>
+            <form id="configurationForm" class="configuration hidden" novalidate>
+              <div class="configuration-head">
+                <div>
+                  <span class="configuration-label">SELECTED DATA</span>
+                  <strong id="configurationSourceTitle"></strong>
+                  <small id="configurationSourceMeta"></small>
+                </div>
+                <button id="chooseDifferentDatasetButton" class="text-button" type="button">Choose different data</button>
+              </div>
+
+              <div id="setupChoicePanel" class="setup-choice-panel">
+                <div class="setup-choice-copy">
+                  <span class="configuration-label">HOW DO YOU WANT TO START?</span>
+                  <h4>Choose the easy setup or build the slide yourself.</h4>
+                  <p>The recommended setup uses the workbook analysis. Nothing is applied until you click the button.</p>
+                </div>
+                <div class="setup-choice-actions">
+                  <button id="quickSetupButton" class="primary-button large-action" type="button">
+                    <strong>Use recommended setup</strong>
+                    <span>Fill in the chart, labels, and values for me</span>
+                  </button>
+                  <button id="manualSetupButton" class="secondary-button large-action" type="button">
+                    <strong>Choose settings myself</strong>
+                    <span>Start with empty choices</span>
+                  </button>
+                </div>
+              </div>
+
+              <div id="configurationWorkspace" class="configuration-workspace hidden">
+                <div class="configuration-toolbar">
+                  <div>
+                    <span class="configuration-label">SLIDE SETUP</span>
+                    <strong>Review and change anything before adding the slide.</strong>
+                  </div>
+                  <button id="useRecommendedButton" class="secondary-button" type="button">Reset to recommended</button>
+                </div>
+
+                <div class="configuration-grid">
+                  <div class="configuration-main">
+                    <fieldset class="form-group simple-form-group">
+                      <legend>1. What should the slide show?</legend>
+                      <label class="field-label required">Slide title
+                        <input id="slideTitle" type="text" maxlength="180" placeholder="Enter a clear slide title" required>
+                      </label>
+                      <div id="chartMappingFields" class="field-grid two top-gap">
+                        <label class="field-label required">What should be listed along the bottom?
+                          <select id="categoryColumn" required>
+                            <option value="" selected disabled>Choose a label column</option>
+                          </select>
+                        </label>
+                        <div class="field-label required">Which numbers should be shown?
+                          <div id="seriesList" class="selection-list single-column"></div>
+                        </div>
+                      </div>
+                      <div id="tableModeNote" class="mapping-note table-mode-note hidden">A table slide uses the detected rows and columns, so no chart labels or values need to be selected.</div>
+                    </fieldset>
+
+                    <fieldset id="repeatedResultsGroup" class="form-group simple-form-group hidden">
+                      <legend>2. The same label appears more than once</legend>
+                      <p class="group-help">Choose what the chart should do when Excel has several results for the same label.</p>
+                      <label class="field-label required">Use these repeated results
+                        <select id="aggregation" required aria-describedby="aggregationHelp">
+                          <option value="" selected disabled>Choose an option</option>
+                          <option value="mean">Use the average result</option>
+                          <option value="median">Use the middle result</option>
+                          <option value="none">Show every result separately</option>
+                          <option value="max">Use the highest result</option>
+                          <option value="min">Use the lowest result</option>
+                        </select>
+                        <small id="aggregationHelp" class="field-help">Most benchmark workbooks use the average or middle result.</small>
+                      </label>
+                    </fieldset>
+
+                    <fieldset class="form-group simple-form-group">
+                      <legend>Names shown on the slide</legend>
+                      <p class="group-help">Change long or unclear names here. Your Excel workbook is not changed.</p>
+                      <label class="toggle-card friendly-toggle">
+                        <input id="simplifyLabels" type="checkbox">
+                        <span class="toggle-switch" aria-hidden="true"></span>
+                        <span><strong>Remove dates and run details</strong><small>Shortens names such as “SMC-4N run 2026-07-27” to a cleaner label.</small></span>
+                      </label>
+                      <div class="label-editor-head top-gap">
+                        <span>Edit individual names</span>
+                        <button id="resetLabelNamesButton" class="text-button" type="button">Reset names</button>
+                      </div>
+                      <div id="labelEditorEmpty" class="mapping-note">Choose the bottom labels and values to see the names used on the slide.</div>
+                      <div id="labelEditorRows" class="label-editor-list"></div>
+                      <textarea id="labelReplacements" hidden></textarea>
+                      <input id="labelMaxLength" type="hidden" value="60">
+                    </fieldset>
+
+                    <details id="advancedOptions" class="advanced-options">
+                      <summary>More options</summary>
+                      <div class="advanced-options-body">
+                        <fieldset class="form-group embedded-form-group">
+                          <legend>Compare and filter</legend>
+                          <div class="field-grid two">
+                            <div class="field-label">Show separate lines or bars for <span class="optional">Optional</span>
+                              <div id="groupList" class="selection-list compact single-column"></div>
+                            </div>
+                            <div id="filtersGroup" class="field-label hidden">Only include <span class="optional">Optional</span>
+                              <div id="filtersList" class="filter-grid single-column"></div>
+                            </div>
+                          </div>
+                          <div id="seriesEstimate" class="mapping-note"></div>
+                        </fieldset>
+
+                        <fieldset class="form-group embedded-form-group">
+                          <legend>Titles and layout</legend>
+                          <div class="field-grid two">
+                            <label class="field-label">Bottom-axis title <span class="optional">Optional</span>
+                              <input id="xAxisTitle" type="text" placeholder="For example: Message size">
+                            </label>
+                            <label class="field-label">Side-axis title <span class="optional">Optional</span>
+                              <input id="yAxisTitle" type="text" placeholder="For example: Bandwidth (GB/s)">
+                            </label>
+                          </div>
+                          <div class="option-toggles">
+                            <label id="dataTableToggle" class="toggle-card disabled">
+                              <input id="showDataTable" type="checkbox" disabled>
+                              <span class="toggle-switch" aria-hidden="true"></span>
+                              <span><strong>Include a data table</strong><small>Places a small table beside the chart.</small></span>
+                            </label>
+                            <label class="toggle-card">
+                              <input id="sortCategories" type="checkbox">
+                              <span class="toggle-switch" aria-hidden="true"></span>
+                              <span><strong>Sort numbers and sizes</strong><small>Leave off to keep the Excel order.</small></span>
+                            </label>
+                          </div>
+                        </fieldset>
+                      </div>
+                    </details>
+                  </div>
+
+                  <aside class="visual-selector">
+                    <div class="visual-selector-head">
+                      <span>CHART STYLE</span>
+                      <strong>How should the data look?</strong>
+                      <p>Only chart styles that fit the selected data can be chosen.</p>
+                    </div>
+                    <div id="slideTypeChoices" class="visual-choice-list" role="radiogroup" aria-label="Slide visual type"></div>
+                    <div id="visualCompatibilityNote" class="compatibility-note">Choose the bottom labels and at least one value to see chart options.</div>
+                  </aside>
+                </div>
+
+                <div id="slideSetupSummary" class="slide-setup-summary">Choose the slide title, labels, values, and chart style.</div>
+                <div class="configuration-footer">
+                  <div id="configurationError" class="message error hidden" role="alert"></div>
+                  <button id="addSlideButton" class="primary-button" type="submit" disabled>Add slide to presentation</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="stageGenerate" class="stage locked" data-stage="5" aria-labelledby="stageGenerateTitle">
+          <header class="stage-header">
+            <div class="stage-number">05</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="generateStageState">Locked</span>
+              <h3 id="stageGenerateTitle">Review and generate</h3>
+              <p>Review the slide order, enter the presentation details, and create the PowerPoint.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <div id="generateLocked" class="locked-message"><span class="lock-icon">⌁</span>Add at least one slide to unlock generation.</div>
+            <div id="deckBuilder" class="deck-builder hidden">
+              <div class="deck-settings">
+                <div>
+                  <span class="configuration-label">PRESENTATION DETAILS</span>
+                  <h4>Finish the presentation</h4>
+                </div>
+                <div class="field-grid two">
+                  <label class="field-label required">Presentation title
+                    <input id="deckTitle" type="text" maxlength="180" placeholder="Enter the presentation title" required>
+                  </label>
+                  <label class="field-label required">Output filename
+                    <input id="outputFilename" type="text" maxlength="180" placeholder="presentation.pptx" required>
+                  </label>
+                </div>
+              </div>
+
+              <div class="deck-outline-head">
+                <div><span>SLIDE OUTLINE</span><strong><b id="slideCount">0</b> slides</strong></div>
+                <button id="reviewPresentationButton" class="secondary-button" type="button">Review presentation</button>
+              </div>
+              <div id="deckList" class="deck-list"></div>
+
+              <div class="generation-readiness">
+                <div>
+                  <strong id="generationReadinessTitle">Complete the required presentation details</strong>
+                  <span id="generationReadinessText">A title, output filename, and at least one slide are required.</span>
+                </div>
+                <button id="generateButton" class="primary-button" type="button" disabled>Generate presentation</button>
+              </div>
+              <div id="generationProgress" class="progress-panel hidden" aria-live="polite">
+                <div class="spinner" aria-hidden="true"></div>
+                <div><strong>Creating your PowerPoint</strong><span id="generationProgressText">Adding charts, tables, labels, and slide content…</span></div>
+              </div>
+              <div id="generationError" class="message error hidden" role="alert"></div>
+
+              <div class="danger-zone">
+                <div><strong>Clear presentation</strong><span>Removes the current slide outline but keeps the analyzed workbook available.</span></div>
+                <button id="clearPresentationButton" class="danger-button" type="button">Clear slides</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="stageDownload" class="stage locked" data-stage="6" aria-labelledby="stageDownloadTitle">
+          <header class="stage-header">
+            <div class="stage-number">06</div>
+            <div class="stage-copy">
+              <span class="stage-state" id="downloadStageState">Locked</span>
+              <h3 id="stageDownloadTitle">Open or download the PowerPoint</h3>
+              <p>Open the saved presentation in PowerPoint, or download another copy through your browser.</p>
+            </div>
+          </header>
+          <div class="stage-body">
+            <div id="downloadLocked" class="locked-message"><span class="lock-icon">⌁</span>Generate the presentation to unlock download options.</div>
+            <div id="completionPanel" class="completion-panel hidden" aria-live="polite">
+              <div class="completion-mark" aria-hidden="true">✓</div>
+              <div class="completion-copy">
+                <span class="completion-kicker">PRESENTATION GENERATED</span>
+                <h4>PowerPoint is ready.</h4>
+                <p>Open the saved file in PowerPoint to view it, or download another copy when needed.</p>
+                <div class="completion-metrics">
+                  <article><span>Filename</span><strong id="generatedFilename"></strong></article>
+                  <article><span>Slides</span><strong id="generatedSlideCount"></strong></article>
+                  <article><span>File size</span><strong id="generatedFileSize"></strong></article>
+                  <article><span>Generation time</span><strong id="generatedTime"></strong></article>
+                </div>
+                <div class="completion-actions">
+                  <button id="openPowerPointButton" class="primary-button" type="button" disabled>Open in PowerPoint</button>
+                  <button id="downloadPowerPointButton" class="secondary-button" type="button" disabled>Download copy</button>
+                  <button id="reviewGeneratedButton" class="secondary-button" type="button">Review presentation</button>
+                  <button id="showOutputFolderButton" class="text-button" type="button" disabled>Show in folder</button>
+                  <button id="generateAnotherButton" class="text-button" type="button">Generate another presentation</button>
+                </div>
+                <div id="downloadError" class="message error hidden" role="alert"></div>
+                <div id="downloadStatus" class="message success hidden" role="status"></div>
+                <details class="details-panel output-details">
+                  <summary>View local output details</summary>
+                  <div class="output-path-row"><span id="generatedSavedPath"></span><button id="copyOutputPathButton" class="text-button" type="button">Copy path</button></div>
+                </details>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer shell-wide">
+    <span>Slide Generator · Local workbook processing</span>
+    <span>Bar chart · Line chart · Difference chart · Table</span>
+  </footer>
+
+  <dialog id="helpDialog" class="app-dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-header">
+        <div><span class="dialog-kicker">HELP</span><h2>How to create a presentation</h2></div>
+        <button class="icon-button dialog-close" value="cancel" aria-label="Close help" title="Close"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="help-grid">
+        <article><span>1</span><div><strong>Select and analyze</strong><p>Choose an .xlsx file, then click Analyze workbook.</p></div></article>
+        <article><span>2</span><div><strong>Choose your data</strong><p>Preview the data sections the app found and select the one you want to show.</p></div></article>
+        <article><span>3</span><div><strong>Build slides</strong><p>Use the recommended setup or choose the title, values, chart style, and names yourself.</p></div></article>
+        <article><span>4</span><div><strong>Create and open</strong><p>Generate the presentation, then open it in PowerPoint or download a copy.</p></div></article>
+      </div>
+      <div class="dialog-footer"><button class="primary-button" value="close">Got it</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="reviewDialog" class="app-dialog wide-dialog">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div><span class="dialog-kicker">PRESENTATION REVIEW</span><h2 id="reviewDialogTitle">Presentation outline</h2><p id="reviewDialogSubtitle"></p></div>
+        <button id="closeReviewDialogButton" class="icon-button dialog-close" type="button" aria-label="Close review" title="Close"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div id="reviewSlides" class="review-slides"></div>
+      <div class="dialog-footer"><button id="closeReviewDialogFooterButton" class="secondary-button" type="button">Back to editor</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="clearDialog" class="app-dialog compact-dialog">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div><span class="dialog-kicker danger-kicker">CONFIRM CLEAR</span><h2>Clear all slides?</h2><p>This removes the current presentation outline. The workbook analysis remains available.</p></div>
+      </div>
+      <div class="dialog-footer split">
+        <button id="cancelClearButton" class="secondary-button" type="button">Cancel</button>
+        <button id="confirmClearButton" class="danger-button" type="button">Clear slides</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="/static/app.js?v=1.2.0"></script>
+</body>
+</html>

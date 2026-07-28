@@ -1,0 +1,38 @@
+# Python temporary files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Frontend development dependencies
+node_modules/
+
+# Excel files supplied by users
+*.xlsx
+*.xls
+*.csv
+
+# Generated PowerPoint files
+*.pptx
+
+# Keep PowerPoint templates required by the application
+!templates/**/*.pptx
+
+# Generated and temporary content
+outputs/*
+!outputs/.gitkeep
+uploads/
+temp/
+tmp/
+
+# Logs and packaged builds
+*.log
+*.zip
+
+# Editor and operating-system files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store

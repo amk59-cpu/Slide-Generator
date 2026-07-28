@@ -1,0 +1,13 @@
+Slide Generator - Third-Party Notices
+=============================================
+
+This package bundles PptxGenJS 4.0.0 and its required runtime dependencies.
+The applicable license files are retained inside each package directory under:
+
+  vendor\node_modules\<package>\
+
+The bundled OpenAI PptxGenJS layout helper is located at:
+
+  vendor\pptxgenjs_helpers\layout.js
+
+No npm installation is required to run the included PowerPoint renderer.
