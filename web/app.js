@@ -1249,7 +1249,6 @@ function confirmNewPresentation() {
 }
 
 function bindEvents() {
-  $("heroSelectButton").addEventListener("click", () => $("fileInput").click());
   $("browseButton").addEventListener("click", (event) => { event.stopPropagation(); $("fileInput").click(); });
   $("fileInput").addEventListener("change", () => acceptFile($("fileInput").files[0]));
   $("dropZone").addEventListener("click", (event) => { if (event.target.id !== "browseButton") $("fileInput").click(); });
