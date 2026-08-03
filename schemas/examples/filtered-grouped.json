@@ -1,0 +1,58 @@
+{
+  "deck_title": "Filtered Benchmark Results",
+  "tables": {
+    "benchmarks": {
+      "display_name": "Full Benchmark Suite",
+      "sheet_name": "All Results",
+      "headers": ["Platform", "Test Suite", "Configuration", "Score", "Date"],
+      "rows": [
+        ["MI300X", "SPEC CPU", "Default", "1842", "2026-03-10"],
+        ["MI300X", "SPEC CPU", "Optimized", "2105", "2026-03-10"],
+        ["MI300X", "MLPerf", "Default", "9850", "2026-03-12"],
+        ["MI300X", "MLPerf", "Optimized", "11200", "2026-03-12"],
+        ["H100", "SPEC CPU", "Default", "1650", "2026-03-10"],
+        ["H100", "SPEC CPU", "Optimized", "1890", "2026-03-10"],
+        ["H100", "MLPerf", "Default", "8200", "2026-03-12"],
+        ["H100", "MLPerf", "Optimized", "9400", "2026-03-12"],
+        ["A100", "SPEC CPU", "Default", "1320", "2026-03-10"],
+        ["A100", "SPEC CPU", "Optimized", "1510", "2026-03-10"],
+        ["A100", "MLPerf", "Default", "6100", "2026-03-12"],
+        ["A100", "MLPerf", "Optimized", "7050", "2026-03-12"]
+      ],
+      "header_row": 1,
+      "start_col": 1,
+      "end_col": 5,
+      "data_end_row": 13
+    }
+  },
+  "slides": [
+    {
+      "table_id": "benchmarks",
+      "slide_type": "grouped_bar",
+      "title": "MLPerf Scores — Optimized Configuration Only",
+      "category_index": 0,
+      "series_indexes": [3],
+      "group_by_indexes": [2],
+      "filters": {
+        "1": ["MLPerf"],
+        "2": ["Optimized"]
+      },
+      "y_axis_title": "Score",
+      "x_axis_title": "Platform",
+      "label_simplify": true
+    },
+    {
+      "table_id": "benchmarks",
+      "slide_type": "grouped_bar",
+      "title": "All Platforms — Grouped by Configuration",
+      "category_index": 0,
+      "series_indexes": [3],
+      "group_by_indexes": [2],
+      "filters": {
+        "1": ["MLPerf"]
+      },
+      "y_axis_title": "Score",
+      "x_axis_title": "Platform"
+    }
+  ]
+}

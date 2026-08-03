@@ -1,0 +1,72 @@
+{
+  "deck_title": "Compute Performance Report",
+  "tables": {
+    "throughput": {
+      "display_name": "Throughput by Message Size",
+      "sheet_name": "Throughput",
+      "headers": ["Message Size", "MI300X (msg/s)", "H100 (msg/s)", "A100 (msg/s)"],
+      "rows": [
+        ["1KB", "485000", "412000", "310000"],
+        ["4KB", "462000", "398000", "295000"],
+        ["16KB", "410000", "365000", "272000"],
+        ["64KB", "325000", "290000", "215000"],
+        ["256KB", "198000", "175000", "130000"],
+        ["1MB", "95000", "82000", "61000"]
+      ],
+      "header_row": 1,
+      "start_col": 1,
+      "end_col": 4,
+      "data_end_row": 7
+    },
+    "latency": {
+      "display_name": "Latency Measurements",
+      "sheet_name": "Latency",
+      "headers": ["Operation", "P50 (ms)", "P95 (ms)", "P99 (ms)"],
+      "rows": [
+        ["Inference", "2.1", "4.8", "8.3"],
+        ["Training Step", "45.2", "52.1", "61.7"],
+        ["Data Load", "0.8", "1.5", "3.2"],
+        ["Gradient Sync", "12.4", "18.9", "25.1"]
+      ],
+      "header_row": 1,
+      "start_col": 1,
+      "end_col": 4,
+      "data_end_row": 5
+    }
+  },
+  "slides": [
+    {
+      "table_id": "throughput",
+      "slide_type": "line",
+      "title": "Throughput vs Message Size",
+      "category_index": 0,
+      "series_indexes": [1, 2, 3],
+      "y_axis_title": "Messages/sec",
+      "x_axis_title": "Message Size",
+      "sort_categories": true
+    },
+    {
+      "table_id": "throughput",
+      "slide_type": "difference",
+      "title": "MI300X Advantage Over Competitors",
+      "category_index": 0,
+      "series_indexes": [1, 2, 3],
+      "y_axis_title": "Relative Difference"
+    },
+    {
+      "table_id": "latency",
+      "slide_type": "data_matrix",
+      "title": "Latency Percentiles (ms)",
+      "category_index": 0
+    },
+    {
+      "table_id": "latency",
+      "slide_type": "grouped_bar",
+      "title": "P99 Latency by Operation",
+      "category_index": 0,
+      "series_indexes": [3],
+      "y_axis_title": "Latency (ms)",
+      "show_data_table": true
+    }
+  ]
+}

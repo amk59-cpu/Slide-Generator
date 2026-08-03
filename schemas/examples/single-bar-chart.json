@@ -1,0 +1,30 @@
+{
+  "deck_title": "GPU Memory Bandwidth",
+  "tables": {
+    "bandwidth": {
+      "display_name": "Memory Bandwidth Results",
+      "sheet_name": "Results",
+      "headers": ["GPU", "Read BW (GB/s)", "Write BW (GB/s)", "Copy BW (GB/s)"],
+      "rows": [
+        ["MI300X", "5200", "4800", "5050"],
+        ["H100 SXM", "3350", "3100", "3220"],
+        ["A100 80GB", "2039", "1900", "1970"]
+      ],
+      "header_row": 1,
+      "start_col": 1,
+      "end_col": 4,
+      "data_end_row": 4
+    }
+  },
+  "slides": [
+    {
+      "table_id": "bandwidth",
+      "slide_type": "grouped_bar",
+      "title": "HBM Memory Bandwidth Comparison",
+      "category_index": 0,
+      "series_indexes": [1, 2, 3],
+      "y_axis_title": "GB/s",
+      "x_axis_title": "GPU"
+    }
+  ]
+}

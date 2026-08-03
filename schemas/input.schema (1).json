@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SlideGeneratorPayload",
+  "description": "Input payload for generate_deck.cjs — produces a PowerPoint presentation from structured table data.",
+  "type": "object",
+  "required": ["tables", "slides"],
+  "properties": {
+    "deck_title": {
+      "type": "string",
+      "description": "Title of the presentation deck.",
+      "default": "Presentation",
+      "minLength": 1,
+      "maxLength": 180
+    },
+    "tables": {
+      "type": "object",
+      "description": "Map of table IDs to table data extracted from Excel.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/Table"
+      }
+    },
+    "slides": {
+      "type": "array",
+      "description": "Ordered list of slide requests. Each entry produces one slide.",
+      "minItems": 1,
+      "maxItems": 300,
+      "items": {
+        "$ref": "#/definitions/SlideRequest"
+      }
+    }
+  },
+  "definitions": {
+    "Table": {
+      "type": "object",
+      "required": ["display_name", "sheet_name", "headers", "rows", "header_row", "start_col", "end_col", "data_end_row"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "description": "Human-readable name for this table."
+        },
+        "sheet_name": {
+          "type": "string",
+          "description": "Name of the Excel worksheet this table came from."
+        },
+        "headers": {
+          "type": "array",
+          "description": "Column header names.",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "rows": {
+          "type": "array",
+          "description": "Data rows. Each row is an array of string values matching the headers length.",
+          "items": {
+            "type": "array",
+            "items": { "type": ["string", "null"] }
+          }
+        },
+        "header_row": {
+          "type": "integer",
+          "description": "1-based row number of the header row in Excel.",
+          "minimum": 1
+        },
+        "start_col": {
+          "type": "integer",
+          "description": "1-based first column index in Excel.",
+          "minimum": 1
+        },
+        "end_col": {
+          "type": "integer",
+          "description": "1-based last column index in Excel.",
+          "minimum": 1
+        },
+        "data_end_row": {
+          "type": "integer",
+          "description": "1-based last data row index in Excel.",
+          "minimum": 1
+        }
+      }
+    },
+    "SlideRequest": {
+      "type": "object",
+      "required": ["table_id", "title"],
+      "properties": {
+        "table_id": {
+          "type": "string",
+          "description": "Key referencing a table in the top-level 'tables' object."
+        },
+        "slide_type": {
+          "type": "string",
+          "description": "Type of slide to generate.",
+          "enum": ["grouped_bar", "line", "difference", "data_matrix"],
+          "default": "grouped_bar"
+        },
+        "title": {
+          "type": "string",
+          "description": "Slide title displayed at the top.",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "category_index": {
+          "type": "integer",
+          "description": "0-based column index for the X-axis / category values.",
+          "default": 0,
+          "minimum": 0
+        },
+        "series_indexes": {
+          "type": "array",
+          "description": "0-based column indexes for Y-axis metric values. Required for chart types (not data_matrix).",
+          "items": { "type": "integer", "minimum": 0 },
+          "maxItems": 12,
+          "uniqueItems": true,
+          "default": []
+        },
+        "group_by_indexes": {
+          "type": "array",
+          "description": "0-based column indexes to split series into sub-groups.",
+          "items": { "type": "integer", "minimum": 0 },
+          "maxItems": 3,
+          "uniqueItems": true,
+          "default": []
+        },
+        "filters": {
+          "type": "object",
+          "description": "Row-level filters. Keys are column indexes (as strings), values are arrays of allowed string values.",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" },
+            "maxItems": 50
+          },
+          "default": {}
+        },
+        "aggregation": {
+          "type": "string",
+          "description": "How to aggregate duplicate category values.",
+          "enum": ["auto", "none", "mean", "median", "max", "min", "sum"],
+          "default": "auto"
+        },
+        "sort_categories": {
+          "type": "boolean",
+          "description": "Whether to sort category axis values (numeric-aware).",
+          "default": true
+        },
+        "x_axis_title": {
+          "type": "string",
+          "description": "Label displayed below the X-axis.",
+          "default": ""
+        },
+        "y_axis_title": {
+          "type": "string",
+          "description": "Label displayed beside the Y-axis.",
+          "default": "Value"
+        },
+        "show_data_table": {
+          "type": "boolean",
+          "description": "When true, displays a numeric data table beside the chart.",
+          "default": false
+        },
+        "label_simplify": {
+          "type": "boolean",
+          "description": "When true, strips dates, run IDs, and test details from labels.",
+          "default": false
+        },
+        "label_replacements": {
+          "type": "string",
+          "description": "Newline-separated 'from => to' rules for renaming labels. Applied before simplification.",
+          "maxLength": 4000,
+          "default": ""
+        },
+        "label_max_length": {
+          "type": "integer",
+          "description": "Maximum character length for labels before truncation.",
+          "minimum": 12,
+          "maximum": 90,
+          "default": 40
+        }
+      }
+    }
+  }
+}
