@@ -194,6 +194,13 @@ AMD Instinct MI300X => MI300X
 NVIDIA H100 SXM => H100
 ```
 
+## Output Rules
+- ALWAYS create and use an `output/` directory for generated files
+- Save slides to: output/<descriptive_name>.pptx
+- Save intermediate plan to: output/plan.json
+- NEVER write .pptx or plan.json files to the repo root or any other directory
+- The output/ directory is gitignored — treat it as disposable
+
 ---
 
 ## Example: Minimal Single Slide
