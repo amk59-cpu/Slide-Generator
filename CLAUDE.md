@@ -35,3 +35,13 @@ repo code changes to use.
 - Do not edit `app/workbook.py`'s auto-detection logic to fit one Excel file's shape.
 - Do not commit generated `.pptx` output files into the repo unless the user asks.
 - Do not push commits or open a PR unless the user explicitly asks.
+
+## PowerPoint Output Validation
+
+- The currently tested presentation-generation workflow has been manually verified in desktop Microsoft PowerPoint.
+- The generated PPTX opened without a repair, retry, recovery, or unreadable-content prompt.
+- Do not assume that the PPTX package is corrupted based only on source-code inspection.
+- Before changing Open XML, slide relationships, package parts, or private PowerPoint-library internals, reproduce the problem with an actual failing PPTX and the exact generation input and execution path.
+- Image-rendered charts and tables are a separate editability and feature concern. Their presence is not evidence that the PPTX is corrupted.
+- Changes to presentation generation must preserve the verified behavior that generated PPTX files open normally in desktop PowerPoint.
+- Do not implement speculative PPTX-repair changes when no failing presentation can be reproduced.
