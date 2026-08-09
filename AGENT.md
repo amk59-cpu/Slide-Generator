@@ -180,13 +180,38 @@ there and select a subset per slide.
 
 ### Display modes
 
-- `"auto"` (default) — a compact single-line strip for 4 or fewer selected
-  fields, a fuller grouped panel (roughly Hardware / Test / Network-FW) for more.
+- `"auto"` (default) — compact ribbon for 4 or fewer selected fields, a fuller
+  grouped panel (roughly Hardware / Test / Network-FW) for more.
 - `"compact"` / `"full"` — force one layout regardless of field count.
 
 The panel geometry is computed dynamically so it never overlaps the chart, legend,
 axes, data table, difference plot, or matrix — the chart/table area shrinks to
 make room when a panel is present, and is completely unaffected when it isn't.
+
+### Presentation is the generator's job, not yours
+
+Compact Test Configuration metadata uses the generator's standard AMD metadata
+ribbon — a small uppercase label over a larger bold value per field, individual
+native text objects, a thin gold accent line above the region, subtle vertical
+separators between fields, and balanced dynamic-width columns (no fixed field
+count, no per-field boxes, no outer rectangle, no pipe-separated text). This is
+implemented in `renderMetadataStrip` in `generator/generate_deck.cjs` and applies
+automatically to every slide family (`grouped_bar`, `line`, `difference`,
+`data_matrix`) whenever compact mode resolves.
+
+**Do not recreate or restyle this per slide or per request.** Claude Code supplies
+metadata *content* only:
+
+- `include_metadata_panel`
+- `metadata_display_fields`
+- `resolved_metadata`
+- `metadata_display_mode`
+
+The generator owns metadata *presentation*. Never author styling instructions
+into a payload (colors, label/value layout, separators, spacing) — the ribbon
+design is fixed and automatic. If a user asks for a visual tweak to the metadata
+component itself (not just which fields/values appear), that's a generator code
+change, not a per-payload JSON customization.
 
 ### Example: config strip only on the comparison slide
 

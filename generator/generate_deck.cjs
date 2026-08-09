@@ -535,15 +535,46 @@ function addSeriesNote(slide, text, showDataTable) {
 }
 
 function renderMetadataStrip(pptx, slide, geometry, fields) {
-  const text = fields.map(({ label, value }) => `${label}: ${value || "—"}`).join("   |   ");
-  slide.addShape(pptx.ShapeType.rect, {
-    x: geometry.x, y: geometry.y, w: geometry.w, h: geometry.h,
-    fill: { color: COLORS.panel2 },
-    line: { color: COLORS.separator, pt: 0.5 },
+  const count = fields.length;
+  if (!count) return;
+
+  // Thin gold accent line along the top edge of the metadata region.
+  slide.addShape(pptx.ShapeType.line, {
+    x: geometry.x, y: geometry.y, w: geometry.w, h: 0,
+    line: { color: COLORS.gold, pt: 0.75 },
   });
-  addText(slide, text, geometry.x + 0.12, geometry.y, geometry.w - 0.24, geometry.h, 8.4, {
-    color: COLORS.body,
-    align: "left",
+
+  const colW = geometry.w / count;
+  const labelY = geometry.y + 0.10;
+  const labelH = 0.16;
+  const valueY = labelY + labelH;
+  const valueH = geometry.h - (valueY - geometry.y) - 0.06;
+  const padX = 0.10;
+
+  fields.forEach(({ label, value }, index) => {
+    const colX = geometry.x + index * colW;
+
+    // Thin vertical separator between modules (not around each field).
+    if (index > 0) {
+      slide.addShape(pptx.ShapeType.line, {
+        x: colX, y: geometry.y + 0.06, w: 0, h: geometry.h - 0.12,
+        line: { color: COLORS.separator, pt: 0.5 },
+      });
+    }
+
+    addText(slide, label.toUpperCase(), colX + padX, labelY, colW - padX * 2, labelH, 7.5, {
+      color: COLORS.gold,
+      bold: false,
+      align: "left",
+      valign: "top",
+      charSpacing: 0.5,
+    });
+    addText(slide, value || "—", colX + padX, valueY, colW - padX * 2, valueH, 11, {
+      color: COLORS.white,
+      bold: true,
+      align: "left",
+      valign: "top",
+    });
   });
 }
 
