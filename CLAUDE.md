@@ -18,9 +18,10 @@ Follow the agent workflow documented in [AGENT.md](AGENT.md). Summary:
    — a `tables` object with raw headers/rows extracted from Excel, and a `slides` array
    describing each requested slide. See [schemas/examples/](schemas/examples/) for worked
    examples.
-4. Write the JSON to a scratch file and run the generator directly:
+4. Write the JSON to an OS-managed temporary file and run the generator directly,
+   saving the result into `outputs/`:
    ```bash
-   node generator/generate_deck.cjs input.json output.pptx
+   node generator/generate_deck.cjs /tmp/input.json outputs/<descriptive_name>.pptx
    ```
 5. Validate the output is a real `.pptx` (non-empty, valid zip) and return it to the user.
 

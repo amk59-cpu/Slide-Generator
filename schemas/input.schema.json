@@ -174,6 +174,29 @@
           "minimum": 12,
           "maximum": 90,
           "default": 40
+        },
+        "include_metadata_panel": {
+          "type": "boolean",
+          "description": "Optional. When true, renders a native (non-image) Test Configuration panel on this slide using metadata_display_fields and resolved_metadata. Omit or set false for no panel and no reserved slide space — existing payloads without this field render exactly as before.",
+          "default": false
+        },
+        "metadata_display_fields": {
+          "type": "array",
+          "description": "Which test-configuration fields to display on this slide, in order. Only meaningful when include_metadata_panel is true. Field names are a convention, not a closed enum — any short snake_case key works as long as resolved_metadata has a matching value and generate_deck.cjs's METADATA_FIELD_LABELS (or an ad hoc label) can render it. Common fields: server, system_type (Helios/Standalone), system_variant (Helios-R/-P/-M or standalone vendor model), cpu, gpu, gpu_count, nic, direction, test, operation, collective, pipeline, transport, packet_spray, vulcano_card, fw.",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "resolved_metadata": {
+          "type": "object",
+          "description": "Map of metadata field name to its display value (both as free strings) for this slide. Only fields listed in metadata_display_fields are rendered; values for fields not selected are ignored. Never invent values here — only include what the user confirmed or what was clearly and reliably identified in the workbook.",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        },
+        "metadata_display_mode": {
+          "type": "string",
+          "description": "Optional override for panel layout. 'auto' (default) picks a compact single-line strip for 4 or fewer fields and a fuller grouped panel otherwise. 'compact' or 'full' force that layout regardless of field count.",
+          "enum": ["auto", "compact", "full"],
+          "default": "auto"
         }
       }
     }

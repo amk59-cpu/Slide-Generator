@@ -46,6 +46,71 @@ const MAX_CHART_SERIES = 10;
 const MAX_TABLE_SERIES = 3;
 const MAX_TABLE_ROWS = 8;
 
+const METADATA_FIELD_LABELS = {
+  server: "Server",
+  cpu: "CPU",
+  gpu: "GPU",
+  gpu_count: "GPU Count",
+  nic: "NIC",
+  direction: "Direction",
+  test: "Test",
+  operation: "Operation",
+  collective: "Collective",
+  pipeline: "Pipeline",
+  transport: "Transport",
+  packet_spray: "Packet Spray",
+  vulcano_card: "Vulcano Card",
+  fw: "FW",
+  system_variant: "System",
+};
+
+const METADATA_STRIP_HEIGHT = 0.42;
+const METADATA_PANEL_HEIGHT = 1.35;
+const METADATA_GAP = 0.12;
+const METADATA_PANEL_BOTTOM_MAX = 6.90; // stays clear of the footer note at y:6.98
+
+function metadataFieldCount(request) {
+  if (!request || !request.include_metadata_panel) return 0;
+  const fields = Array.isArray(request.metadata_display_fields) ? request.metadata_display_fields : [];
+  return fields.filter((field) => METADATA_FIELD_LABELS[field]).length;
+}
+
+// "auto" (default): compact strip for <=4 fields, full panel otherwise.
+// "compact"/"full": explicit override, regardless of field count.
+function metadataDisplayMode(request) {
+  const mode = request && request.metadata_display_mode;
+  return mode === "compact" || mode === "full" ? mode : "auto";
+}
+
+function metadataFieldsForPanel(request) {
+  if (!request || !request.include_metadata_panel) return [];
+  const resolved = request.resolved_metadata || {};
+  const fields = Array.isArray(request.metadata_display_fields) ? request.metadata_display_fields : [];
+  return fields
+    .filter((field) => METADATA_FIELD_LABELS[field])
+    .map((field) => ({ field, label: METADATA_FIELD_LABELS[field], value: cleanString(resolved[field] || "") }));
+}
+
+// Single source of truth for metadata-panel geometry. Returns null when no
+// fields are selected so callers degrade to today's unshrunk layout exactly.
+function metadataPanelGeometry(fieldCount, mode = "auto") {
+  if (!fieldCount) return null;
+  const compact = mode === "compact" ? true : mode === "full" ? false : fieldCount <= 4;
+  const h = compact ? METADATA_STRIP_HEIGHT : METADATA_PANEL_HEIGHT;
+  const y = METADATA_PANEL_BOTTOM_MAX - h;
+  return { compact, x: 0.55, y, w: 12.23, h, contentBottomLimit: y - METADATA_GAP };
+}
+
+// Shrinks a fixed content geometry (chart/table/matrix) so its bottom edge
+// never passes the metadata panel's reserved area. When fieldCount is 0 this
+// returns `base` unchanged — the byte-identical-to-today guarantee.
+function reserveMetadataSpace(base, fieldCount, mode = "auto") {
+  const panel = metadataPanelGeometry(fieldCount, mode);
+  if (!panel) return base;
+  const maxHeight = panel.contentBottomLimit - base.y;
+  return { ...base, h: Math.min(base.h, maxHeight) };
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -327,7 +392,7 @@ function chartGeometry(showDataTable) {
 
 function chartOptions(request, categoryCount, seriesCount, showDataTable = false) {
   const dense = categoryCount > 18;
-  const geometry = chartGeometry(showDataTable);
+  const geometry = reserveMetadataSpace(chartGeometry(showDataTable), metadataFieldCount(request), metadataDisplayMode(request));
   return {
     ...geometry,
     chartColors: SERIES_COLORS.slice(0, Math.max(1, seriesCount)),
@@ -412,7 +477,7 @@ function shortLabel(value, maximum = 32) {
   return text.length > maximum ? `${text.slice(0, maximum - 1)}…` : text;
 }
 
-function addVisibleDataTable(pptx, slide, extracted) {
+function addVisibleDataTable(pptx, slide, extracted, request) {
   const { categories, names, values } = extracted;
   const categoryHeader = shortLabel(extracted.categoryHeader || "Input", 20);
   const categoryIndexes = sampledIndexes(categories.length, MAX_TABLE_ROWS);
@@ -439,10 +504,8 @@ function addVisibleDataTable(pptx, slide, extracted) {
       })),
     ]);
   });
-  const tableX = 9.18;
-  const tableY = 1.34;
-  const tableW = 3.48;
-  const tableH = 5.12;
+  const baseGeometry = { x: 9.18, y: 1.34, w: 3.48, h: 5.12 };
+  const { x: tableX, y: tableY, w: tableW, h: tableH } = reserveMetadataSpace(baseGeometry, metadataFieldCount(request), metadataDisplayMode(request));
   const firstColumn = shownNames.length >= 3 ? 0.88 : 1.08;
   const remaining = (tableW - firstColumn) / Math.max(1, shownNames.length);
   slide.addTable(rows, {
@@ -471,6 +534,63 @@ function addSeriesNote(slide, text, showDataTable) {
   });
 }
 
+function renderMetadataStrip(pptx, slide, geometry, fields) {
+  const text = fields.map(({ label, value }) => `${label}: ${value || "—"}`).join("   |   ");
+  slide.addShape(pptx.ShapeType.rect, {
+    x: geometry.x, y: geometry.y, w: geometry.w, h: geometry.h,
+    fill: { color: COLORS.panel2 },
+    line: { color: COLORS.separator, pt: 0.5 },
+  });
+  addText(slide, text, geometry.x + 0.12, geometry.y, geometry.w - 0.24, geometry.h, 8.4, {
+    color: COLORS.body,
+    align: "left",
+  });
+}
+
+function renderMetadataFullPanel(slide, geometry, fields) {
+  const columnCount = 3;
+  const rowsPerColumn = Math.ceil(fields.length / columnCount);
+  const rows = [];
+  for (let rowIndex = 0; rowIndex < rowsPerColumn; rowIndex += 1) {
+    const cells = [];
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+      const field = fields[columnIndex * rowsPerColumn + rowIndex];
+      if (!field) {
+        cells.push({ text: "", options: { fill: { color: COLORS.panel } } });
+        continue;
+      }
+      cells.push({
+        text: `${field.label}:  ${field.value || "—"}`,
+        options: { color: COLORS.body, fill: { color: COLORS.panel }, align: "left" },
+      });
+    }
+    rows.push(cells);
+  }
+  slide.addTable(rows, {
+    x: geometry.x, y: geometry.y, w: geometry.w, h: geometry.h,
+    rowH: geometry.h / Math.max(1, rows.length),
+    colW: Array.from({ length: columnCount }, () => geometry.w / columnCount),
+    fontFace: "Arial",
+    fontSize: 8,
+    color: COLORS.body,
+    border: { type: "solid", color: "1F1F1F", pt: 0.35 },
+    margin: 0.06,
+    valign: "mid",
+    autoPage: false,
+  });
+}
+
+function renderMetadataPanel(pptx, slide, request) {
+  const fields = metadataFieldsForPanel(request);
+  const geometry = metadataPanelGeometry(fields.length, metadataDisplayMode(request));
+  if (!geometry) return;
+  if (geometry.compact) {
+    renderMetadataStrip(pptx, slide, geometry, fields);
+  } else {
+    renderMetadataFullPanel(slide, geometry, fields);
+  }
+}
+
 function renderGroupedOrLine(pptx, slide, request, extracted) {
   const showTable = Boolean(request.show_data_table);
   const display = request.slide_type === "grouped_bar"
@@ -496,8 +616,9 @@ function renderGroupedOrLine(pptx, slide, request, extracted) {
     });
     slide.addChart(pptx.ChartType.line, categoryChartData(names, categories, values), options);
   }
-  if (showTable) addVisibleDataTable(pptx, slide, display);
+  if (showTable) addVisibleDataTable(pptx, slide, display, request);
   addSeriesNote(slide, display.note, showTable);
+  renderMetadataPanel(pptx, slide, request);
 }
 
 
@@ -551,8 +672,9 @@ function renderDifference(pptx, slide, request, extracted) {
     valLabelFormatCode: percentValues ? "0%" : "0.###",
   });
   slide.addChart(pptx.ChartType.bar, chartData, options);
-  if (showTable) addVisibleDataTable(pptx, slide, differenceData);
+  if (showTable) addVisibleDataTable(pptx, slide, differenceData, request);
   addSeriesNote(slide, differenceData.note, showTable);
+  renderMetadataPanel(pptx, slide, request);
 }
 
 function renderMatrix(pptx, slide, table, request) {
@@ -571,10 +693,7 @@ function renderMatrix(pptx, slide, table, request) {
       options: { color: COLORS.body, fill: { color: fillColor }, align: "center" },
     })));
   });
-  const x = 0.72;
-  const y = 1.24;
-  const w = 11.85;
-  const h = 5.54;
+  const { x, y, w, h } = reserveMetadataSpace({ x: 0.72, y: 1.24, w: 11.85, h: 5.54 }, metadataFieldCount(request), metadataDisplayMode(request));
   slide.addTable(rows, {
     x, y, w, h,
     rowH: h / rows.length,
@@ -589,6 +708,7 @@ function renderMatrix(pptx, slide, table, request) {
   if (table.rows.length > maxRows || table.headers.length > maxColumns) {
     addText(slide, `Showing ${maxRows} of ${table.rows.length} rows and ${maxColumns} of ${table.headers.length} columns.`, 0.72, 6.96, 11.85, 0.16, 5.8, { color: "8C8C8C" });
   }
+  renderMetadataPanel(pptx, slide, request);
 }
 
 

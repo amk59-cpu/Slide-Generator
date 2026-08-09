@@ -1,0 +1,57 @@
+{
+  "deck_title": "Vulcano RCCL All-Reduce Bandwidth",
+  "tables": {
+    "rccl_allreduce": {
+      "display_name": "RCCL All-Reduce BW (Vulcano)",
+      "sheet_name": "RCCL_AllReduce",
+      "headers": ["Msg Size", "Baseline (GB/s)", "Vulcano (GB/s)"],
+      "rows": [
+        ["1M", "180", "205"],
+        ["4M", "310", "365"],
+        ["16M", "410", "480"],
+        ["64M", "455", "520"],
+        ["256M", "470", "535"]
+      ],
+      "header_row": 1,
+      "start_col": 1,
+      "end_col": 3,
+      "data_end_row": 6
+    }
+  },
+  "slides": [
+    {
+      "table_id": "rccl_allreduce",
+      "slide_type": "line",
+      "title": "RCCL All-Reduce Bandwidth — Vulcano",
+      "category_index": 0,
+      "series_indexes": [1, 2],
+      "x_axis_title": "Message Size",
+      "y_axis_title": "GB/s",
+      "_comment": "This is the plain result slide — no metadata panel requested for it, so it renders exactly as it would without the feature."
+    },
+    {
+      "table_id": "rccl_allreduce",
+      "slide_type": "difference",
+      "title": "Vulcano vs Baseline — RCCL All-Reduce",
+      "category_index": 0,
+      "series_indexes": [1, 2],
+      "x_axis_title": "Message Size",
+      "y_axis_title": "Relative difference",
+      "_comment": "The comparison slide the user asked to have the config strip on.",
+      "include_metadata_panel": true,
+      "metadata_display_mode": "compact",
+      "metadata_display_fields": ["system_variant", "cpu", "gpu", "nic", "test", "direction"],
+      "resolved_metadata": {
+        "system_variant": "Helios-R",
+        "cpu": "Turin",
+        "gpu": "MI355 x8",
+        "nic": "Vulcano",
+        "test": "RCCL BW / All-Reduce",
+        "direction": "Bidirectional",
+        "vulcano_card": "Saraceno",
+        "transport": "Meta RoCEv2",
+        "packet_spray": "DLB"
+      }
+    }
+  ]
+}

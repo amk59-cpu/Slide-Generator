@@ -14,12 +14,12 @@ You parse the data, construct a JSON payload, and run the generation script.
 2. **Identify the data tables** — each contiguous range of headers + data rows becomes a table entry.
 3. **Map user intent to slide requests** — determine slide type, which columns are categories vs. metrics, any grouping or filters.
 4. **Construct the JSON payload** conforming to `schema/input.schema.json`.
-5. **Write the JSON** to a file (e.g., `input.json`).
-6. **Run the generator:**
+5. **Write the JSON** to an OS-managed temporary file (do not write it into the repo).
+6. **Run the generator**, saving the result into `outputs/`:
    ```bash
-   node generator/generate_deck.cjs input.json output.pptx
+   node generator/generate_deck.cjs /tmp/input.json outputs/<descriptive_name>.pptx
    ```
-7. **Return `output.pptx`** to the user.
+7. **Return the `outputs/<descriptive_name>.pptx`** to the user.
 
 ---
 
@@ -93,6 +93,160 @@ An array of slide request objects. Each produces one slide in the output deck.
 | `label_simplify` | bool | `false` | — | Strip dates and run details from labels |
 | `label_replacements` | string | `""` | Max 4000 chars | Newline-separated `from => to` rules for renaming labels |
 | `label_max_length` | int | `40` | 12–90 | Truncate labels beyond this length |
+| `include_metadata_panel` | bool | `false` | — | Show a Test Configuration panel on this slide (see below) |
+| `metadata_display_fields` | string[] | `[]` | — | Which metadata fields to display, in order |
+| `resolved_metadata` | object | `{}` | field name → string value | The actual values to show for the selected fields |
+| `metadata_display_mode` | enum | `"auto"` | `"auto"`, `"compact"`, `"full"` | Force compact strip or full grouped panel, or let field count decide |
+
+---
+
+## Test Configuration Metadata (optional)
+
+Slides can optionally carry a small panel of test-configuration details — hardware,
+test type, network settings — rendered as native, editable PowerPoint text/shapes
+(never an image). This is entirely optional: a slide with no metadata fields set
+renders exactly as it does today, with no reserved space and no panel.
+
+### When to include it
+
+Include metadata on a slide only when the user's request makes it appropriate:
+
+- **Explicit user instruction** — the user tells you the hardware/test details and
+  asks for them on the slide(s) ("Helios-R, Turin, 8 MI355 GPUs... put the config
+  on the comparison slide").
+- **Clearly identified workbook content** — a sheet name, header, or cell
+  unambiguously states a value (e.g. a cell literally reading `NIC: Vulcano`).
+- **Reliable sheet/workbook context** — e.g. a sheet named `RCCL_AllReduce_MI355`
+  clearly implies `test: RCCL BW`, `collective: All-Reduce`, `gpu: MI355`.
+
+**Never invent a value that isn't clearly supported by the prompt or the workbook.**
+If a value is ambiguous or missing, either ask the user to clarify or leave that
+field out of `metadata_display_fields`/`resolved_metadata` — do not guess. Explicit
+user-provided values always take precedence over anything inferred from the
+workbook.
+
+Whether to include the panel at all — and on which slides — is entirely your
+(the agent's) judgment call based on the user's request. A user might want the
+config strip on every slide, only on a "summary"/"comparison" slide, or not at all.
+
+### Field vocabulary
+
+There is no fixed enum — `metadata_display_fields` accepts any short snake_case
+key, and `resolved_metadata` maps that key to a free-text string value. Common
+fields used in practice:
+
+| Field | Example values |
+|-------|----------------|
+| `system_type` | `Helios`, `Standalone` |
+| `system_variant` | `Helios-R`, `Helios-P`, `Helios-M`, or a standalone vendor/model string (e.g. `Dell PowerEdge R760`) |
+| `cpu` | `Turin`, `Venice` |
+| `gpu` | `MI355`, `MI455X` |
+| `gpu_count` | `8`, `MI355 x8` |
+| `nic` | `Pollara`, `Vulcano` |
+| `direction` | `Bidirectional`, `Uni-Direction` |
+| `test` | `RCCL BW`, `IB BW` |
+| `operation` | `Read`, `Write`, `WriteIBMM` |
+| `collective` | `All-to-All`, `All-Reduce` |
+| `pipeline` | `Hydra`, `Pulsar`, `Quasar` |
+| `transport` | `RoCEv2`, `MRC`, `Meta RoCEv2` |
+| `packet_spray` | `EV spray`, `DLB`, `SRv6` |
+| `vulcano_card` | `Saraceno`, `Mortaro`, `Vulsei` |
+| `fw` | a firmware version string |
+
+Use whatever field names and values fit the workbook/prompt — these are examples,
+not a closed list.
+
+### Structure
+
+```json
+{
+  "include_metadata_panel": true,
+  "metadata_display_mode": "compact",
+  "metadata_display_fields": ["system_variant", "cpu", "gpu", "nic", "test", "direction"],
+  "resolved_metadata": {
+    "system_variant": "Helios-R",
+    "cpu": "Turin",
+    "gpu": "MI355 x8",
+    "nic": "Vulcano",
+    "test": "RCCL BW / All-Reduce",
+    "direction": "Bidirectional"
+  }
+}
+```
+
+Only fields listed in `metadata_display_fields` are rendered; extra keys in
+`resolved_metadata` are ignored, so it's fine to keep a superset of known values
+there and select a subset per slide.
+
+### Display modes
+
+- `"auto"` (default) — a compact single-line strip for 4 or fewer selected
+  fields, a fuller grouped panel (roughly Hardware / Test / Network-FW) for more.
+- `"compact"` / `"full"` — force one layout regardless of field count.
+
+The panel geometry is computed dynamically so it never overlaps the chart, legend,
+axes, data table, difference plot, or matrix — the chart/table area shrinks to
+make room when a panel is present, and is completely unaffected when it isn't.
+
+### Example: config strip only on the comparison slide
+
+> **User:** "Make Vulcano RCCL bandwidth slides. This was Helios-R, Turin, 8 MI355
+> GPUs, Saraceno, Meta RoCEv2, DLB. Put the config strip only on the comparison
+> slides."
+
+```json
+{
+  "deck_title": "Vulcano RCCL All-Reduce Bandwidth",
+  "tables": { "rccl_allreduce": { "...": "..." } },
+  "slides": [
+    {
+      "table_id": "rccl_allreduce",
+      "slide_type": "line",
+      "title": "RCCL All-Reduce Bandwidth — Vulcano",
+      "category_index": 0,
+      "series_indexes": [1, 2]
+    },
+    {
+      "table_id": "rccl_allreduce",
+      "slide_type": "difference",
+      "title": "Vulcano vs Baseline — RCCL All-Reduce",
+      "category_index": 0,
+      "series_indexes": [1, 2],
+      "include_metadata_panel": true,
+      "metadata_display_mode": "compact",
+      "metadata_display_fields": ["system_variant", "cpu", "gpu", "nic", "test", "direction"],
+      "resolved_metadata": {
+        "system_variant": "Helios-R",
+        "cpu": "Turin",
+        "gpu": "MI355 x8",
+        "nic": "Vulcano",
+        "test": "RCCL BW / All-Reduce",
+        "direction": "Bidirectional",
+        "vulcano_card": "Saraceno",
+        "transport": "Meta RoCEv2",
+        "packet_spray": "DLB"
+      }
+    }
+  ]
+}
+```
+
+The first slide has no metadata fields and renders exactly as it would without
+this feature. The second slide (the "comparison slide") gets the compact strip
+with only the 6 fields the user cares most about on that view — `vulcano_card`,
+`transport`, and `packet_spray` are still available in `resolved_metadata` in case
+a later slide's `metadata_display_fields` wants them, but aren't shown here.
+
+See [schemas/examples/metadata-panel.json](schemas/examples/metadata-panel.json)
+for the full runnable version of this example.
+
+### Backward compatibility
+
+This generator is shared with the production web application. All metadata
+fields are optional and default to "off" — existing JSON payloads without them
+(including all payloads the web app currently sends) continue to render
+identically. Do not require metadata to be present, and never change existing
+field names or behavior to accommodate it.
 
 ---
 
@@ -195,11 +349,14 @@ NVIDIA H100 SXM => H100
 ```
 
 ## Output Rules
-- ALWAYS create and use an `output/` directory for generated files
-- Save slides to: output/<descriptive_name>.pptx
-- Save intermediate plan to: output/plan.json
-- NEVER write .pptx or plan.json files to the repo root or any other directory
-- The output/ directory is gitignored — treat it as disposable
+- The only persistent output directory is `<repo-root>/outputs/` — save final
+  `.pptx` files there (e.g. `outputs/<descriptive_name>.pptx`).
+- Use an OS-managed temporary file/directory (e.g. Python's `tempfile`) for the
+  intermediate JSON plan passed to the generator. Do not write it into the repo.
+- Do NOT create `scratch/`, `output/`, `ouput/`, `preview/`, or any other
+  ad hoc directory for generated or intermediate files.
+- NEVER write `.pptx` files to the repo root or anywhere other than `outputs/`.
+- `outputs/` is gitignored — treat its contents as disposable.
 
 ---
 
