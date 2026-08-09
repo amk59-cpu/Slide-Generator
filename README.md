@@ -1,56 +1,145 @@
-# Slide Generator
+# Slide Excel Generator
 
-A local Windows application that turns Excel data into consistent PowerPoint slides.
+A deterministic Excel-to-PowerPoint slide generation tool for benchmark and performance data.
 
-## Start the application
+The repository contains a working local web application (unfinished) as well as a direct agent/generator workflow. Excel data is converted into structured slide specifications and rendered into presentation-ready PowerPoint slides using a shared generator.
 
-1. Extract the ZIP into a normal local folder.
-2. Double-click `Start-Slide-Generator.bat`.
-3. Keep the launcher window open while using the application.
+The goal of the project is to make benchmark slide generation repeatable, consistent, and easy to update without manually rebuilding charts in PowerPoint.
 
-On the first launch, the app creates a local `.venv` folder and installs any missing Python packages. The PowerPoint JavaScript libraries are already included, so no `npm install` is required.
+---
 
 ## Requirements
 
 - Windows 10 or Windows 11
 - Python 3.11 or newer
 - Node.js 18 or newer
-- Microsoft PowerPoint for opening presentations
+- Microsoft PowerPoint for opening and reviewing generated presentations
 
-## Simple workflow
+Workbook analysis and PowerPoint generation run locally on the computer running the application.
+
+---
+
+## Supported slide types features
+
+The generator supports four slide groups:
+
+### Grouped Bar
+
+Best for comparing a small number of configurations, products, builds, or benchmark results across discrete categories.
+
+Examples:
+- Product comparisons
+- Performance across several configurations
+
+Grouped bar slides can optionally include a visible data table if needed.
+
+### Line
+
+Best for ordered or continuous benchmark data.
+
+Examples:
+- Packet-size sweeps
+- Bandwidth curves
+- QP scaling
+
+Dense datasets remain a `line` slide type. The generator adjusts visible labels and chart presentation for readability.
+
+Line slides can optionally include a visible data table.
+
+### Difference
+
+Used to show performance difference between two selected results.
+
+This is useful for:
+- Regression analysis
+- Baseline comparisons
+- Percentage or performance differences
+
+Positive and negative values are visually separated around a zero baseline.
+
+### Data Matrix
+
+Used when the underlying data is better communicated as a structured performance matrix instead of a chart.
+
+This is useful when many configurations, metrics, or test combinations need to be compared in a compact format.
+
+---
+
+## Optional Test Configuration Metadata
+
+Slides can optionally include a Test Configuration metadata panel.
+
+Metadata is **optionally added** to slides.
+
+The user decides whether configuration information should appear. Claude Code or the application may understand metadata from the workbook or user prompt, but finding metadata does not automatically enable the panel.
+
+The generator controls how metadata is presented. The user or agent controls which metadata values are included.
+
+Supported metadata includes:
+- Helios server type: Helios-R, Helios-P, Helios-M
+- Standalone server manufacturer/model
+- CPU type
+- GPU model
+- Number of GPUs
+- NIC type: Pollara, Vulcano, or other
+- Traffic direction
+- Test type
+- Operation: Read, Write, WriteIBMM, etc.
+- RCCL traffic type: All-to-All, All-Reduce, etc.
+- Pipeline: Hydra, Pulsar, Quasar, etc.
+- Transport mode
+- Packet spray mode
+- Firmware version
+
+Metadata values are not restricted to these examples so the generator can support future platforms, NICs, GPUs, CPUs, pipelines, and test configurations.
+
+If metadata is not enabled, the original slide geometry is preserved.
+
+---
+
+## Browser/Windows application workflow
+
+The repository contains a local browser application for interactive slide generation.
+
+Typical workflow:
 
 1. Select an `.xlsx` workbook.
 2. Click **Analyze workbook**.
-3. Choose the data section you want to use.
-4. Click **Use recommended setup** for the easiest path, or choose the settings yourself.
-5. Review the slide title, chart style, values, and names shown on the slide.
-6. Add the slide to the presentation.
-7. Generate the PowerPoint and open or download it.
+3. Choose the detected data section you want to use.
+4. Click **Use recommended setup** or configure the slide manually.
+5. Review the category/X-axis column and selected metric series.
+6. Choose the slide type and slide options.
+7. Review names and labels that will appear on the slide.
+8. Add the slide to the presentation plan.
+9. Generate the PowerPoint.
+10. Open or download the generated presentation.
 
-## Editing names shown on a slide
+The web application is designed for users who want to review and control workbook interpretation through a graphical interface.
 
-Each slide includes a plain-language **Names shown on the slide** section. It lists the names found in Excel beside editable text boxes. Change the text in the right-hand box to control what appears in the chart or table.
+---
 
-You can also turn on **Remove dates and run details** to shorten names such as a platform name followed by a test date. These changes affect only the generated slide; the Excel workbook is never changed.
+## Claude Code / Agent workflow
 
-The name editor is available for bar charts, line charts, difference charts, and table slides.
+The repository also supports direct PowerPoint generation through Claude Code without using the browser interface.
 
-## Repeated results
+The intended flow is:
 
-The repeated-results question appears only when the same chart label occurs more than once in the selected data. The user can choose to use the average, middle, highest, or lowest result, or show each result separately. When labels are not repeated, this control stays hidden.
-
-## PowerPoint output
-
-The application uses the stable PowerPoint-readable slide output. Charts are rendered for consistent visual quality. To change chart content, labels, filters, or layout, click **Edit** beside the slide in the application and generate the presentation again.
-
-## Project folders
-
-- `app/` — local server and workbook reader
-- `web/` — frontend files
-- `generator/` — PowerPoint generation code
-- `templates/` — visual reference presentation
-- `vendor/` — bundled PowerPoint libraries
-- `outputs/` — presentations generated by the app
-- `docs/` — technical notes and notices
-
-Workbook analysis and PowerPoint generation happen locally on the computer running the application.
+```text
+Excel workbook + natural-language prompt
+                |
+                v
+        Claude Code Desktop
+                |
+                | reads workbook with openpyxl
+                v
+      Structured workbook data
+                |
+                | Claude determines slide intent
+                v
+          Deck / Slide JSON
+                |
+                v
+ generator/generate_deck.cjs
+                |
+                v
+       outputs/<deck>.pptx
