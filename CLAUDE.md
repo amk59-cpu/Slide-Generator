@@ -1,9 +1,10 @@
 # Slide Generator — Claude Code Instructions
 
-This repo turns Excel workbooks into PowerPoint decks via Claude Code (or another
-agent) driving `generator/generate_deck.cjs` directly. There is no web server or
-browser UI — see [PROMPT_TEMPLATE.md](PROMPT_TEMPLATE.md) for the request format
-teammates should use when asking for slides.
+This repo turns Excel workbooks into PowerPoint decks. `app/renderer.py`,
+`app/workbook.py`, `app/schemas.py`, and `web/` support an in-progress browser
+workflow (there is no longer a running server — `app/server.py` was removed).
+Do not modify these files unless the user explicitly asks for a code change to
+that browser workflow itself.
 
 ## When a user wants slides generated from an Excel file
 
@@ -25,8 +26,13 @@ Follow the agent workflow documented in [AGENT.md](AGENT.md). Summary:
    ```
 5. Validate the output is a real `.pptx` (non-empty, valid zip) and return it to the user.
 
+This path calls `generator/generate_deck.cjs` — the same rendering engine the browser
+workflow uses — directly, bypassing the browser's auto-detection parser entirely. It
+requires no repo code changes to use.
+
 ## What NOT to do
 
+- Do not edit `app/workbook.py`'s auto-detection logic to fit one Excel file's shape.
 - Do not commit generated `.pptx` output files into the repo unless the user asks.
 - Do not push commits or open a PR unless the user explicitly asks.
 

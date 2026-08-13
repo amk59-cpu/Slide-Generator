@@ -2,9 +2,7 @@
 
 A deterministic Excel-to-PowerPoint slide generation tool for benchmark and performance data.
 
-Excel data is converted into structured slide specifications and rendered into
-presentation-ready PowerPoint slides using a shared generator, driven directly by
-Claude Code (or another agent) — no server or browser UI required.
+The repository contains a working local web application (unfinished) as well as a direct agent/generator workflow. Excel data is converted into structured slide specifications and rendered into presentation-ready PowerPoint slides using a shared generator.
 
 The goal of the project is to make benchmark slide generation repeatable, consistent, and easy to update without manually rebuilding charts in PowerPoint.
 
@@ -13,11 +11,11 @@ The goal of the project is to make benchmark slide generation repeatable, consis
 ## Requirements
 
 - Windows 10 or Windows 11
-- Python 3.11 or newer (for reading `.xlsx` workbooks with `openpyxl`)
-- Node.js 18 or newer (for `generator/generate_deck.cjs`)
+- Python 3.11 or newer
+- Node.js 18 or newer
 - Microsoft PowerPoint for opening and reviewing generated presentations
 
-Workbook analysis and PowerPoint generation run locally on the computer running the agent.
+Workbook analysis and PowerPoint generation run locally on the computer running the application.
 
 ---
 
@@ -99,13 +97,32 @@ If metadata is not enabled, the original slide geometry is preserved.
 
 ---
 
+## Browser/Windows application workflow
+
+The repository contains a local browser application for interactive slide generation.
+
+Typical workflow:
+
+1. Select an `.xlsx` workbook.
+2. Click **Analyze workbook**.
+3. Choose the detected data section you want to use.
+4. Click **Use recommended setup** or configure the slide manually.
+5. Review the category/X-axis column and selected metric series.
+6. Choose the slide type and slide options.
+7. Review names and labels that will appear on the slide.
+8. Add the slide to the presentation plan.
+9. Generate the PowerPoint.
+10. Open or download the generated presentation.
+
+The web application is designed for users who want to review and control workbook interpretation through a graphical interface.
+
+---
+
 ## Claude Code / Agent workflow
 
-PowerPoint generation happens directly through Claude Code (or another agent).
-See [PROMPT_TEMPLATE.md](PROMPT_TEMPLATE.md) for the request format to use, and
-[AGENT.md](AGENT.md) for the full workflow the agent follows.
+The repository also supports direct PowerPoint generation through Claude Code without using the browser interface.
 
-The flow is:
+The intended flow is:
 
 ```text
 Excel workbook + natural-language prompt
