@@ -1,30 +1,30 @@
 # Slide Generation — Prompt Template
 
-Use this template when asking an agent (Claude Code or similar) to generate slides
+Use this template when asking an agent (Claude Code) to generate slides
 from an Excel workbook using this repo. Filling it in up front avoids two common
 failure modes we've hit:
 
-1. **The agent bypasses this repo's generator** and writes an ad-hoc script
+1. **The agent bypasses this repo's generator** and writes its own script
    instead of using `generator/generate_deck.cjs` per `AGENT.md`/`CLAUDE.md`.
 2. **The agent chases false "corruption" reports.** A file that "won't open" is
    often a OneDrive sync placeholder, a permissions issue, or a stale preview
    cache — not a broken `.pptx`. See `CLAUDE.md`'s validation section before
    assuming the generator produced a bad file.
 
-Copy the block below, fill in the brackets, and lead with it.
+Copy the block below, fill in the brackets
 
 ---
 
 ## Template
 
 ```
-Repo: amd/Slide-Generator (or wherever this repo lives for you)
+Repo: Slide-Generator (or wherever this repo lives for you)
 Before doing anything else: read AGENT.md and CLAUDE.md in this repo and follow
 the documented workflow. Use generator/generate_deck.cjs — do not write a custom
 script to build the deck.
 
-Excel file: [path to .xlsx]
-Sheet(s) / build tag: [e.g. "1.125.0-a-118+RRx_Latest"]
+Excel file: [path to local .xlsx]
+Sheet(s) / build tag: [Name of Excel sheet(s)]
 
 Slide(s) wanted:
 - [Test name, e.g. "IB Write Uni-Direction"]
