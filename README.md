@@ -17,6 +17,13 @@ The goal of the project is to make benchmark slide generation repeatable, consis
 
 Workbook analysis and PowerPoint generation run locally on the computer running the application.
 
+Before first use, install the generator's Node dependency:
+
+```bash
+cd vendor
+npm install pptxgenjs
+```
+
 ---
 
 ## Supported slide types features
