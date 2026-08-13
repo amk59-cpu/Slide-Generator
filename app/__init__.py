@@ -1,1 +1,0 @@
-"""Slide Generator application package."""
